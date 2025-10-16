@@ -1,10 +1,10 @@
 name: CI/CD to VPS (SSH + Docker Compose)
 
-
 on:
-push:
-branches: [ "main" ]
-workflow_dispatch:
+  push:
+    branches: ["master"]   # ← у тебя default = master
+  workflow_dispatch:
+
 
 
 concurrency:
