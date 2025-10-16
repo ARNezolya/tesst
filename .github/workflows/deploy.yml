@@ -1,0 +1,45 @@
+name: CI/CD to VPS (SSH + Docker Compose)
+
+
+on:
+push:
+branches: [ "main" ]
+workflow_dispatch:
+
+
+concurrency:
+group: ci-${{ github.ref }}
+cancel-in-progress: true
+
+
+jobs:
+test:
+runs-on: ubuntu-latest
+steps:
+- uses: actions/checkout@v4
+- uses: actions/setup-node@v4
+with:
+node-version: 20
+- run: npm ci || true # если не Node-проект — оставь true, либо адаптируй под свой стек
+- run: npm test --if-present
+
+
+deploy:
+needs: test
+runs-on: ubuntu-latest
+steps:
+- name: SSH → pull & compose up
+uses: appleboy/ssh-action@v1.1.0
+with:
+host: ${{ secrets.SSH_HOST }}
+username: ${{ secrets.SSH_USER }}
+key: ${{ secrets.SSH_KEY }}
+port: ${{ secrets.SSH_PORT || 22 }}
+script: |
+set -e
+cd /opt/app/app
+GIT_SSH_COMMAND='ssh -i ~/.ssh/id_deploy' git fetch --all --prune
+GIT_SSH_COMMAND='ssh -i ~/.ssh/id_deploy' git checkout ${{ github.sha }}
+git submodule update --init --recursive || true
+docker compose up -d --build --remove-orphans
+docker image prune -f
