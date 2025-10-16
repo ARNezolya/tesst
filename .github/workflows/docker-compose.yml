@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    env_file: .env
+    restart: always
+    ports:
+      - "3000:3000"   # при использовании реверс-прокси порт можно не публиковать
